@@ -4,43 +4,15 @@ import { pages } from "@/db/schema";
 import {
   badRequest,
   findActivePage,
-  getActivePages,
   getSessionWorkspace,
   nextSortOrder,
   notFound,
   parseJsonBody,
   TITLE_MAX_LENGTH,
-  type PageRow,
   unauthorized,
 } from "@/lib/pages-api";
 
-type PageNode = PageRow & { children: PageNode[] };
-
-/** 활성 페이지 트리 조회 */
-export async function GET(request: Request) {
-  const workspace = await getSessionWorkspace(request);
-  if (!workspace) return unauthorized();
-
-  const rows = await getActivePages(workspace.id);
-
-  const nodes = new Map<string, PageNode>();
-  for (const row of rows) {
-    nodes.set(row.id, { ...row, children: [] });
-  }
-  const tree: PageNode[] = [];
-  for (const node of nodes.values()) {
-    const parent = node.parentId ? nodes.get(node.parentId) : undefined;
-    if (parent) {
-      parent.children.push(node);
-    } else {
-      tree.push(node);
-    }
-  }
-
-  return NextResponse.json({ pages: tree });
-}
-
-/** 페이지 생성 (부모 지정 가능) */
+/** 데이터베이스 페이지 생성 (부모 지정 가능) */
 export async function POST(request: Request) {
   const workspace = await getSessionWorkspace(request);
   if (!workspace) return unauthorized();
@@ -48,7 +20,7 @@ export async function POST(request: Request) {
   const body = await parseJsonBody(request);
   if (!body) return badRequest("요청 본문이 올바른 JSON 객체가 아닙니다.");
 
-  let title = "새 페이지";
+  let title = "새 데이터베이스";
   if (body.title !== undefined) {
     if (typeof body.title !== "string" || body.title.trim() === "") {
       return badRequest("title은 비어 있지 않은 문자열이어야 합니다.");
@@ -77,6 +49,7 @@ export async function POST(request: Request) {
       workspaceId: workspace.id,
       parentId,
       title,
+      pageType: "database",
       sortOrder,
     })
     .returning();

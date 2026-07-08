@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pages } from "@/db/schema";
@@ -7,8 +7,10 @@ import {
   findActivePage,
   getActivePages,
   getSessionWorkspace,
+  ICON_MAX_LENGTH,
   notFound,
   parseJsonBody,
+  softDeletePageAndDescendants,
   TITLE_MAX_LENGTH,
   unauthorized,
 } from "@/lib/pages-api";
@@ -32,6 +34,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     content: string;
     parentId: string | null;
     sortOrder: number;
+    icon: string | null;
+    coverImage: string | null;
   }> = {};
 
   if (body.title !== undefined) {
@@ -49,6 +53,24 @@ export async function PATCH(request: Request, context: RouteContext) {
       return badRequest("content는 문자열이어야 합니다.");
     }
     updates.content = body.content;
+  }
+
+  if (body.icon !== undefined) {
+    if (body.icon !== null && typeof body.icon !== "string") {
+      return badRequest("icon은 문자열 또는 null이어야 합니다.");
+    }
+    if (typeof body.icon === "string" && body.icon.length > ICON_MAX_LENGTH) {
+      return badRequest(`icon은 ${ICON_MAX_LENGTH}자 이하여야 합니다.`);
+    }
+    const trimmedIcon = typeof body.icon === "string" ? body.icon.trim() : null;
+    updates.icon = trimmedIcon === "" ? null : trimmedIcon;
+  }
+
+  if (body.coverImage !== undefined) {
+    if (body.coverImage !== null && typeof body.coverImage !== "string") {
+      return badRequest("coverImage는 문자열 또는 null이어야 합니다.");
+    }
+    updates.coverImage = body.coverImage;
   }
 
   const activePages = await getActivePages(workspace.id);
@@ -121,28 +143,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   const page = await findActivePage(workspace.id, id);
   if (!page) return notFound();
 
-  // 활성 페이지 트리에서 자신 + 모든 후손을 수집한다.
-  const activePages = await getActivePages(workspace.id);
-  const childrenByParent = new Map<string, string[]>();
-  for (const row of activePages) {
-    if (!row.parentId) continue;
-    const list = childrenByParent.get(row.parentId) ?? [];
-    list.push(row.id);
-    childrenByParent.set(row.parentId, list);
-  }
-
-  const targetIds: string[] = [];
-  const queue = [page.id];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    targetIds.push(current);
-    queue.push(...(childrenByParent.get(current) ?? []));
-  }
-
-  await db
-    .update(pages)
-    .set({ deletedAt: new Date() })
-    .where(inArray(pages.id, targetIds));
+  const targetIds = await softDeletePageAndDescendants(workspace.id, page.id);
 
   return NextResponse.json({ deletedIds: targetIds });
 }

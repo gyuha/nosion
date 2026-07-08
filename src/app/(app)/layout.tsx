@@ -24,7 +24,9 @@ export default async function AppLayout({
     id: row.id,
     parentId: row.parentId,
     title: row.title,
+    icon: row.icon,
     sortOrder: row.sortOrder,
+    pageType: row.pageType,
   }));
 
   return (

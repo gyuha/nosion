@@ -44,6 +44,9 @@ next-env.d.ts
 # database (SQLite)
 /data/
 
+# uploaded files
+/public/uploads/
+
 # forge
 .forge/*
 !.forge/CONTEXT.md

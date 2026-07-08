@@ -1,10 +1,11 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, max } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { pages, workspaces } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 export const TITLE_MAX_LENGTH = 200;
+export const ICON_MAX_LENGTH = 8;
 
 export type PageRow = typeof pages.$inferSelect;
 
@@ -70,4 +71,52 @@ export async function findActivePage(workspaceId: string, pageId: string) {
     ),
   });
   return row ?? null;
+}
+
+/** 지정된 부모(parentId) 아래 형제들 중 다음에 올 sortOrder 값을 계산한다. */
+export async function nextSortOrder(
+  workspaceId: string,
+  parentId: string | null,
+) {
+  const [{ maxSort }] = await db
+    .select({ maxSort: max(pages.sortOrder) })
+    .from(pages)
+    .where(
+      and(
+        eq(pages.workspaceId, workspaceId),
+        parentId === null ? isNull(pages.parentId) : eq(pages.parentId, parentId),
+        isNull(pages.deletedAt),
+      ),
+    );
+  return (maxSort ?? -1) + 1;
+}
+
+/** 페이지와 그 하위(후손) 전체를 소프트 삭제하고 삭제된 id 목록을 반환한다. */
+export async function softDeletePageAndDescendants(
+  workspaceId: string,
+  pageId: string,
+) {
+  const activePages = await getActivePages(workspaceId);
+  const childrenByParent = new Map<string, string[]>();
+  for (const row of activePages) {
+    if (!row.parentId) continue;
+    const list = childrenByParent.get(row.parentId) ?? [];
+    list.push(row.id);
+    childrenByParent.set(row.parentId, list);
+  }
+
+  const targetIds: string[] = [];
+  const queue = [pageId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    targetIds.push(current);
+    queue.push(...(childrenByParent.get(current) ?? []));
+  }
+
+  await db
+    .update(pages)
+    .set({ deletedAt: new Date() })
+    .where(inArray(pages.id, targetIds));
+
+  return targetIds;
 }

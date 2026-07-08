@@ -14,11 +14,37 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const emptySubscribe = () => () => {};
 
+/** 이미지 블록(붙여넣기/파일선택)에서 호출되는 업로드 핸들러. 업로드된 파일의 URL을 반환한다. */
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("이미지 업로드에 실패했습니다.");
+  const { url } = await res.json();
+  return url;
+}
+
 /** BlockNote는 브라우저 전용(window 접근)이라 하이드레이션 이후에만 true가 된다. */
 function useIsClient() {
   return useSyncExternalStore(
     emptySubscribe,
     () => true,
+    () => false,
+  );
+}
+
+/** <html> 요소의 dark 클래스를 관찰해 앱의 다크 모드 토글을 에디터 테마에 반영한다. */
+function useIsDarkMode() {
+  return useSyncExternalStore(
+    (callback) => {
+      const observer = new MutationObserver(callback);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      return () => observer.disconnect();
+    },
+    () => document.documentElement.classList.contains("dark"),
     () => false,
   );
 }
@@ -43,7 +69,9 @@ function PageEditorClient({
     initialContent,
     dictionary: ko,
     schema,
+    uploadFile,
   });
+  const isDark = useIsDarkMode();
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,7 +100,12 @@ function PageEditorClient({
 
   return (
     <div className="mt-8">
-      <BlockNoteView editor={editor} onChange={handleChange} slashMenu={false}>
+      <BlockNoteView
+        editor={editor}
+        onChange={handleChange}
+        slashMenu={false}
+        theme={isDark ? "dark" : "light"}
+      >
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) =>

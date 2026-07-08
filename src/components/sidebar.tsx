@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import LogoutButton from "@/components/logout-button";
+import ThemeToggle from "@/components/theme-toggle";
 
 export type PageItem = {
   id: string;
   parentId: string | null;
   title: string;
+  icon: string | null;
   sortOrder: number;
+  pageType: "document" | "database" | "database_row";
 };
 
 type ApiNode = PageItem & { children: ApiNode[] };
@@ -20,6 +23,9 @@ type DropTarget = { id: string; zone: DropZone };
 const ROOT_END = "__root_end__";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
+
+/** 페이지 상세 화면(제목/아이콘 편집) 등 사이드바 밖에서 페이지가 바뀌었음을 알리는 이벤트 */
+export const PAGES_CHANGED_EVENT = "nosion:pages-changed";
 
 type TreeCtx = {
   childrenMap: Map<string | null, PageItem[]>;
@@ -60,6 +66,14 @@ function PlusIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" aria-hidden>
       <path d="M8 3a.75.75 0 0 1 .75.75v3.5h3.5a.75.75 0 0 1 0 1.5h-3.5v3.5a.75.75 0 0 1-1.5 0v-3.5h-3.5a.75.75 0 0 1 0-1.5h3.5v-3.5A.75.75 0 0 1 8 3z" />
+    </svg>
+  );
+}
+
+function TableIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" aria-hidden>
+      <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v7A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13.5 3h-11zM2.5 4.5h3.75v2H2.5v-2zm5.25 0h5.75v2H7.75v-2zM2.5 8h3.75v3.5H2.5V8zm5.25 0h5.75v3.5H7.75V8z" />
     </svg>
   );
 }
@@ -143,7 +157,18 @@ function TreeNode({
             className="min-w-0 flex-1 rounded border border-blue-400 bg-white px-1 py-0 text-sm text-zinc-900 outline-none dark:bg-zinc-900 dark:text-zinc-50"
           />
         ) : (
-          <span className="min-w-0 flex-1 truncate">{node.title}</span>
+          <span className="min-w-0 flex-1 truncate">
+            {node.icon ? (
+              <span className="mr-1">{node.icon}</span>
+            ) : (
+              node.pageType === "database" && (
+                <span className="mr-1 inline-flex text-zinc-400">
+                  <TableIcon />
+                </span>
+              )
+            )}
+            {node.title}
+          </span>
         )}
         {!isRenaming && (
           <div
@@ -289,7 +314,9 @@ export default function Sidebar({
             id: node.id,
             parentId: node.parentId,
             title: node.title,
+            icon: node.icon,
             sortOrder: node.sortOrder,
+            pageType: node.pageType,
           });
           walk(node.children);
         }
@@ -300,6 +327,11 @@ export default function Sidebar({
       // 네트워크 오류 시 기존 상태 유지
     }
   }
+
+  useEffect(() => {
+    window.addEventListener(PAGES_CHANGED_EVENT, refetch);
+    return () => window.removeEventListener(PAGES_CHANGED_EVENT, refetch);
+  }, []);
 
   async function createPage(parentId: string | null) {
     const res = await fetch("/api/pages", {
@@ -315,6 +347,21 @@ export default function Sidebar({
     if (parentId) {
       setExpanded((prev) => new Set(prev).add(parentId));
     }
+    await refetch();
+    router.push(`/p/${page.id}`);
+  }
+
+  async function createDatabase() {
+    const res = await fetch("/api/databases", {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      alert("데이터베이스를 만들지 못했습니다.");
+      return;
+    }
+    const { page } = (await res.json()) as { page: PageItem };
     await refetch();
     router.push(`/p/${page.id}`);
   }
@@ -596,11 +643,21 @@ export default function Sidebar({
         >
           <PlusIcon />새 페이지
         </button>
+        <button
+          type="button"
+          onClick={() => void createDatabase()}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-600 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+        >
+          <TableIcon />새 데이터베이스
+        </button>
         <div className="mt-2 flex items-center justify-between gap-2 px-2">
           <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-zinc-400">
             {userEmail}
           </span>
-          <LogoutButton />
+          <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
         </div>
       </div>
     </aside>
