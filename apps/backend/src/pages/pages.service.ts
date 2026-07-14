@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { and, asc, eq, inArray, isNull, max } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, max } from "drizzle-orm";
 import type { PageNode, PageType } from "@nosion/shared";
 import { db } from "../drizzle/client";
 import { page } from "../drizzle/schema";
@@ -135,6 +135,47 @@ export class PagesService {
       .where(
         and(eq(page.workspaceId, workspaceId), inArray(page.id, targetIds)),
       );
+  }
+
+  async getTrash(workspaceId: string) {
+    return db
+      .select()
+      .from(page)
+      .where(and(eq(page.workspaceId, workspaceId), isNotNull(page.deletedAt)));
+  }
+
+  async restore(workspaceId: string, id: string) {
+    const target = await this.findOwned(workspaceId, id);
+    const descendantIds = await this.collectDescendantIds(workspaceId, id);
+    const targetIds = [id, ...descendantIds];
+    await db
+      .update(page)
+      .set({ deletedAt: null })
+      .where(
+        and(eq(page.workspaceId, workspaceId), inArray(page.id, targetIds)),
+      );
+
+    // 부모가 없거나(이미 삭제되어 존재하지 않음은 불가하므로) 부모가 여전히
+    // 휴지통에 있으면 최상위로 복원한다(PRD F7).
+    if (target.parentId) {
+      const [parent] = await db
+        .select({ deletedAt: page.deletedAt })
+        .from(page)
+        .where(eq(page.id, target.parentId));
+      if (!parent || parent.deletedAt) {
+        await db
+          .update(page)
+          .set({ parentId: null })
+          .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)));
+      }
+    }
+  }
+
+  async permanentDelete(workspaceId: string, id: string) {
+    await this.findOwned(workspaceId, id);
+    await db
+      .delete(page)
+      .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)));
   }
 
   private async collectDescendantIds(

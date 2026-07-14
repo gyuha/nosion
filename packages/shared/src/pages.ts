@@ -39,3 +39,9 @@ export interface PageDetail {
   isFavorite: boolean;
   isRow: boolean;
 }
+
+export interface TrashItem {
+  id: string;
+  title: string;
+  type: PageType;
+}

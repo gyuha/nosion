@@ -164,6 +164,7 @@ function TreeNode({ node, allPages }: { node: PageNode; allPages: PageNode[] }) 
 }
 
 export default function PageTree() {
+  const navigate = useNavigate();
   const { data: tree, isPending } = usePageTree();
   const createPage = useCreatePage();
 
@@ -195,6 +196,12 @@ export default function PageTree() {
           <TreeNode key={node.id} node={node} allPages={allPages} />
         ))}
       </ul>
+      <button
+        className="mt-2 block w-full rounded px-1 py-0.5 text-left text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+        onClick={() => navigate("/trash")}
+      >
+        🗑️ 휴지통
+      </button>
     </nav>
   );
 }

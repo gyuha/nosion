@@ -79,4 +79,19 @@ export class PagesController {
     await this.pagesService.softDelete(workspaceId, id);
     return { ok: true };
   }
+
+  @Post(":id/restore")
+  async restore(@WorkspaceId() workspaceId: string, @Param("id") id: string) {
+    await this.pagesService.restore(workspaceId, id);
+    return { ok: true };
+  }
+
+  @Delete(":id/permanent")
+  async permanentDelete(
+    @WorkspaceId() workspaceId: string,
+    @Param("id") id: string,
+  ) {
+    await this.pagesService.permanentDelete(workspaceId, id);
+    return { ok: true };
+  }
 }

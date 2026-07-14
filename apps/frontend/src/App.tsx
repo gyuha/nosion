@@ -4,6 +4,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import AppShell from "./routes/AppShell";
 import Home from "./routes/Home";
 import PageView from "./routes/PageView";
+import Trash from "./routes/Trash";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
           <Route path="/page/:pageId" element={<PageView />} />
+          <Route path="/trash" element={<Trash />} />
         </Route>
       </Route>
     </Routes>
