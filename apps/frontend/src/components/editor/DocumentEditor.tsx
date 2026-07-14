@@ -5,6 +5,7 @@ import type { Block } from "@blocknote/core";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { useDocumentContent, useSaveDocumentContent } from "../../api/documents";
+import { useTheme } from "../../theme/ThemeProvider";
 
 const AUTO_SAVE_DELAY_MS = 800;
 
@@ -52,6 +53,7 @@ function EditorBody({
   saveError: boolean;
 }) {
   const editor = useCreateBlockNote({ initialContent: initialBlocks });
+  const { theme } = useTheme();
 
   return (
     <div>
@@ -62,6 +64,7 @@ function EditorBody({
       )}
       <BlockNoteView
         editor={editor}
+        theme={theme}
         onChange={() => onChangeBlocks(editor.document)}
       />
     </div>
