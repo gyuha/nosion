@@ -4,6 +4,8 @@ import { usePage, useUpdatePage } from "../api/pages";
 import DocumentEditor from "../components/editor/DocumentEditor";
 import DatabaseView from "../components/database/DatabaseView";
 import RowPropertiesPanel from "../components/database/RowPropertiesPanel";
+import IconPicker from "../components/page/IconPicker";
+import CoverPicker from "../components/page/CoverPicker";
 
 export default function PageView() {
   const { pageId } = useParams();
@@ -31,6 +33,14 @@ export default function PageView() {
 
   return (
     <div className={`px-4 py-6 ${isDatabaseNotRow ? "" : "mx-auto max-w-3xl"}`}>
+      <CoverPicker
+        cover={page.cover}
+        onChange={(cover) => updatePage.mutate({ id: pageId, body: { cover } })}
+      />
+      <IconPicker
+        icon={page.icon}
+        onChange={(icon) => updatePage.mutate({ id: pageId, body: { icon } })}
+      />
       <input
         className="w-full border-none bg-transparent text-3xl font-bold outline-none dark:text-gray-100"
         value={title}
