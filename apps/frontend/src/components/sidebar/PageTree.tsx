@@ -68,6 +68,7 @@ function TreeNode({ node, allPages }: { node: PageNode; allPages: PageNode[] }) 
             className="flex-1 truncate text-left"
             onClick={() => navigate(`/page/${node.id}`)}
           >
+            {node.isFavorite && "⭐ "}
             {node.title}
           </button>
         )}
@@ -109,6 +110,15 @@ function TreeNode({ node, allPages }: { node: PageNode; allPages: PageNode[] }) 
                 }}
               >
                 이름 변경
+              </button>
+              <button
+                className="block w-full px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => {
+                  updatePage.mutate({ id: node.id, body: { isFavorite: !node.isFavorite } });
+                  setMenuOpen(false);
+                }}
+              >
+                {node.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
               </button>
               <label className="block px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700">
                 이동:
@@ -171,9 +181,27 @@ export default function PageTree() {
   if (isPending) return null;
   const nodes = tree ?? [];
   const allPages = flatten(nodes);
+  const favorites = allPages.filter((p) => p.isFavorite);
 
   return (
     <nav className="w-64 shrink-0 border-r border-gray-200 p-2 dark:border-gray-700">
+      {favorites.length > 0 && (
+        <div className="mb-3">
+          <span className="text-xs font-semibold text-gray-500">즐겨찾기</span>
+          <ul className="mt-1">
+            {favorites.map((p) => (
+              <li key={p.id}>
+                <button
+                  className="block w-full truncate rounded px-1 py-0.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={() => navigate(`/page/${p.id}`)}
+                >
+                  {p.icon ?? (p.type === "database" ? "🗄️" : "📄")} {p.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-500">페이지</span>
         <div className="flex gap-1 text-xs">
