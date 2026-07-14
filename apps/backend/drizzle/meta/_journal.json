@@ -36,6 +36,13 @@
       "when": 1784024550715,
       "tag": "0004_regular_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784025069870,
+      "tag": "0005_enable_pg_trgm_search_indexes",
+      "breakpoints": true
     }
   ]
 }

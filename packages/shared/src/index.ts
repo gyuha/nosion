@@ -5,3 +5,4 @@ export * from "./pages";
 export * from "./documents";
 export * from "./databases";
 export * from "./views";
+export * from "./search";

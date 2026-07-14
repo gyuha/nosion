@@ -30,6 +30,7 @@ export function useSaveDocumentContent(pageId: string | undefined) {
       }),
     onSuccess: (data) => {
       qc.setQueryData(["documents", pageId], data);
+      qc.invalidateQueries({ queryKey: ["search"] });
     },
   });
 }

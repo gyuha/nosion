@@ -55,6 +55,7 @@ export function useUpdatePage() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: TREE_KEY });
       qc.invalidateQueries({ queryKey: ["pages", vars.id] });
+      qc.invalidateQueries({ queryKey: ["search"] });
     },
   });
 }
@@ -72,6 +73,9 @@ export function useDeletePage() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api(`/pages/${id}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TREE_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TREE_KEY });
+      qc.invalidateQueries({ queryKey: ["search"] });
+    },
   });
 }

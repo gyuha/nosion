@@ -8,6 +8,7 @@ import { WorkspaceContextInterceptor } from "./auth/workspace-context.intercepto
 import { PagesModule } from "./pages/pages.module";
 import { DocumentsModule } from "./documents/documents.module";
 import { DatabasesModule } from "./databases/databases.module";
+import { SearchModule } from "./search/search.module";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DatabasesModule } from "./databases/databases.module";
     PagesModule,
     DocumentsModule,
     DatabasesModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [

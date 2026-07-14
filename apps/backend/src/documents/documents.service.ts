@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { DocumentContent } from "@nosion/shared";
 import { db } from "../drizzle/client";
 import { document, page } from "../drizzle/schema";
+import { extractPlainText } from "./extract-text";
 
 @Injectable()
 export class DocumentsService {
@@ -34,12 +35,13 @@ export class DocumentsService {
     content: DocumentContent,
   ): Promise<DocumentContent> {
     await this.assertOwned(workspaceId, pageId);
+    const searchText = extractPlainText(content);
     await db
       .insert(document)
-      .values({ pageId, content })
+      .values({ pageId, content, searchText })
       .onConflictDoUpdate({
         target: document.pageId,
-        set: { content },
+        set: { content, searchText },
       });
     return content;
   }
