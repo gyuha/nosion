@@ -49,6 +49,7 @@ export class PagesService {
     workspaceId: string,
     type: PageType,
     parentId: string | null | undefined,
+    isRow = false,
   ) {
     if (parentId) {
       await this.findOwned(workspaceId, parentId);
@@ -68,6 +69,7 @@ export class PagesService {
         workspaceId,
         parentId: parentId ?? null,
         type,
+        isRow,
         position: (nextPosition ?? -1) + 1,
       })
       .returning();

@@ -7,6 +7,7 @@ import { auth } from "./auth/auth.config";
 import { WorkspaceContextInterceptor } from "./auth/workspace-context.interceptor";
 import { PagesModule } from "./pages/pages.module";
 import { DocumentsModule } from "./documents/documents.module";
+import { DatabasesModule } from "./databases/databases.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DocumentsModule } from "./documents/documents.module";
     AuthModule.forRoot({ auth }),
     PagesModule,
     DocumentsModule,
+    DatabasesModule,
   ],
   controllers: [AppController],
   providers: [

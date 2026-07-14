@@ -37,4 +37,5 @@ export interface PageDetail {
   icon: string | null;
   cover: string | null;
   isFavorite: boolean;
+  isRow: boolean;
 }

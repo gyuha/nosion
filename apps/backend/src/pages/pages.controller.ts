@@ -47,6 +47,7 @@ export class PagesController {
       icon: row.icon,
       cover: row.cover,
       isFavorite: row.isFavorite,
+      isRow: row.isRow,
     };
   }
 

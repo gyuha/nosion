@@ -6,6 +6,7 @@ import {
   uuid,
   integer,
   jsonb,
+  primaryKey,
   AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -100,3 +101,35 @@ export const document = pgTable("document", {
   // 본문 평문 텍스트 캐시. 검색 인덱스 갱신 로직은 F6(global-search)에서 채운다.
   searchText: text("search_text"),
 });
+
+// 데이터베이스 페이지의 속성(열) 정의.
+export const dbProperty = pgTable("db_property", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pageId: uuid("page_id")
+    .notNull()
+    .references(() => page.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type")
+    .notNull()
+    .$type<"text" | "number" | "select" | "multi_select" | "date" | "checkbox">(),
+  // 셀렉트/다중셀렉트 옵션 등 타입별 부가 설정.
+  config: jsonb("config").notNull().default({}),
+  position: integer("position").notNull().default(0),
+});
+
+// 행(row=페이지)의 속성 값. 값은 타입별 JSONB로 저장한다(EAV).
+export const propertyValue = pgTable(
+  "property_value",
+  {
+    rowPageId: uuid("row_page_id")
+      .notNull()
+      .references(() => page.id, { onDelete: "cascade" }),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => dbProperty.id, { onDelete: "cascade" }),
+    value: jsonb("value"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.rowPageId, table.propertyId] }),
+  ],
+);

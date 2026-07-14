@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePage, useUpdatePage } from "../api/pages";
 import DocumentEditor from "../components/editor/DocumentEditor";
+import DatabaseTable from "../components/database/DatabaseTable";
+import RowPropertiesPanel from "../components/database/RowPropertiesPanel";
 
 export default function PageView() {
   const { pageId } = useParams();
@@ -35,12 +37,13 @@ export default function PageView() {
         onBlur={commitTitle}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
       />
+      {page.isRow && page.parentId && (
+        <RowPropertiesPanel databasePageId={page.parentId} rowPageId={pageId} />
+      )}
       {page.type === "document" ? (
         <DocumentEditor pageId={pageId} />
       ) : (
-        <p className="mt-4 text-sm text-gray-500">
-          데이터베이스 편집은 이후 태스크(F4)에서 구현됩니다.
-        </p>
+        <DatabaseTable pageId={pageId} />
       )}
     </div>
   );
