@@ -5,9 +5,10 @@ import { AppController } from "./app.controller";
 import { DrizzleModule } from "./drizzle/drizzle.module";
 import { auth } from "./auth/auth.config";
 import { WorkspaceContextInterceptor } from "./auth/workspace-context.interceptor";
+import { PagesModule } from "./pages/pages.module";
 
 @Module({
-  imports: [DrizzleModule, AuthModule.forRoot({ auth })],
+  imports: [DrizzleModule, AuthModule.forRoot({ auth }), PagesModule],
   controllers: [AppController],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: WorkspaceContextInterceptor },

@@ -1,4 +1,12 @@
-import { pgTable, text, boolean, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  boolean,
+  timestamp,
+  uuid,
+  integer,
+  AnyPgColumn,
+} from "drizzle-orm/pg-core";
 
 // better-auth 관리 테이블 (npx @better-auth/cli generate 산출을 기반으로 손질).
 export const user = pgTable("user", {
@@ -59,4 +67,25 @@ export const workspace = pgTable("workspace", {
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+});
+
+// 페이지 트리(사이드바)의 노드. 행(데이터베이스 행)도 페이지로 저장되지만
+// is_row=true인 페이지는 트리에 노출하지 않는다(architecture.md §3).
+export const page = pgTable("page", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspace.id, { onDelete: "cascade" }),
+  parentId: uuid("parent_id").references(
+    (): AnyPgColumn => page.id,
+    { onDelete: "cascade" },
+  ),
+  type: text("type").notNull().$type<"document" | "database">(),
+  title: text("title").notNull().default("제목 없음"),
+  icon: text("icon"),
+  cover: text("cover"),
+  isRow: boolean("is_row").notNull().default(false),
+  isFavorite: boolean("is_favorite").notNull().default(false),
+  position: integer("position").notNull().default(0),
+  deletedAt: timestamp("deleted_at"),
 });
