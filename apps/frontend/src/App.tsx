@@ -3,7 +3,7 @@ import Login from "./routes/Login";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AppShell from "./routes/AppShell";
 import Home from "./routes/Home";
-import PagePlaceholder from "./routes/PagePlaceholder";
+import PageView from "./routes/PageView";
 
 export default function App() {
   return (
@@ -12,7 +12,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
-          <Route path="/page/:pageId" element={<PagePlaceholder />} />
+          <Route path="/page/:pageId" element={<PageView />} />
         </Route>
       </Route>
     </Routes>

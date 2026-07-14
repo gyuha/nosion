@@ -5,6 +5,7 @@ import {
   timestamp,
   uuid,
   integer,
+  jsonb,
   AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -88,4 +89,14 @@ export const page = pgTable("page", {
   isFavorite: boolean("is_favorite").notNull().default(false),
   position: integer("position").notNull().default(0),
   deletedAt: timestamp("deleted_at"),
+});
+
+// 문서 페이지 본문. 페이지당 BlockNote JSON 하나를 JSONB로 통저장한다(ADR-0004).
+export const document = pgTable("document", {
+  pageId: uuid("page_id")
+    .primaryKey()
+    .references(() => page.id, { onDelete: "cascade" }),
+  content: jsonb("content").notNull().default([]),
+  // 본문 평문 텍스트 캐시. 검색 인덱스 갱신 로직은 F6(global-search)에서 채운다.
+  searchText: text("search_text"),
 });
