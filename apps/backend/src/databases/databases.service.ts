@@ -4,11 +4,14 @@ import type {
   DatabaseResponse,
   DbProperty,
   DbRow,
+  DbView,
   PropertyConfig,
   PropertyType,
+  ViewConfig,
+  ViewType,
 } from "@nosion/shared";
 import { db } from "../drizzle/client";
-import { dbProperty, page, propertyValue } from "../drizzle/schema";
+import { dbProperty, dbView, page, propertyValue } from "../drizzle/schema";
 import { PagesService } from "../pages/pages.service";
 
 @Injectable()
@@ -72,6 +75,8 @@ export class DatabasesService {
       values: valuesByRow.get(r.id) ?? {},
     }));
 
+    const views = await this.getOrCreateViews(pageId);
+
     return {
       properties: properties.map(
         (p): DbProperty => ({
@@ -83,7 +88,89 @@ export class DatabasesService {
         }),
       ),
       rows,
+      views,
     };
+  }
+
+  // 데이터베이스마다 최소 1개(기본 "테이블")의 뷰가 있어야 한다(PRD F5: 기본 뷰는 테이블).
+  private async getOrCreateViews(pageId: string): Promise<DbView[]> {
+    let rows = await db
+      .select()
+      .from(dbView)
+      .where(eq(dbView.pageId, pageId))
+      .orderBy(asc(dbView.position));
+    if (rows.length === 0) {
+      const [created] = await db
+        .insert(dbView)
+        .values({ pageId, name: "테이블", type: "table", position: 0 })
+        .returning();
+      rows = [created!];
+    }
+    return rows.map(
+      (v): DbView => ({
+        id: v.id,
+        name: v.name,
+        type: v.type as ViewType,
+        config: v.config as ViewConfig,
+        position: v.position,
+      }),
+    );
+  }
+
+  async createView(
+    workspaceId: string,
+    pageId: string,
+    name: string,
+    type: ViewType,
+  ) {
+    await this.assertDatabasePage(workspaceId, pageId);
+    const existing = await db
+      .select({ position: dbView.position })
+      .from(dbView)
+      .where(eq(dbView.pageId, pageId));
+    const nextPosition = existing.length
+      ? Math.max(...existing.map((e) => e.position)) + 1
+      : 0;
+    const [created] = await db
+      .insert(dbView)
+      .values({ pageId, name, type, position: nextPosition })
+      .returning();
+    return created;
+  }
+
+  async updateView(
+    workspaceId: string,
+    pageId: string,
+    viewId: string,
+    patch: { name?: string; config?: ViewConfig },
+  ) {
+    await this.assertDatabasePage(workspaceId, pageId);
+    await this.findView(pageId, viewId);
+    const [updated] = await db
+      .update(dbView)
+      .set(patch)
+      .where(and(eq(dbView.id, viewId), eq(dbView.pageId, pageId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteView(workspaceId: string, pageId: string, viewId: string) {
+    await this.assertDatabasePage(workspaceId, pageId);
+    await this.findView(pageId, viewId);
+    await db
+      .delete(dbView)
+      .where(and(eq(dbView.id, viewId), eq(dbView.pageId, pageId)));
+  }
+
+  private async findView(pageId: string, viewId: string) {
+    const [row] = await db
+      .select()
+      .from(dbView)
+      .where(and(eq(dbView.id, viewId), eq(dbView.pageId, pageId)));
+    if (!row) {
+      throw new NotFoundException("뷰를 찾을 수 없습니다");
+    }
+    return row;
   }
 
   async createProperty(

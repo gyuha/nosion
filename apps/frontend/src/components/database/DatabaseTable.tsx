@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PropertyType } from "@nosion/shared";
+import type { DbProperty, DbRow, PropertyType } from "@nosion/shared";
 import {
   useCreateProperty,
   useCreateRow,
-  useDatabase,
   useDeleteProperty,
   useDeleteRow,
   useUpdateProperty,
@@ -98,9 +97,16 @@ function AddPropertyForm({ pageId }: { pageId: string }) {
   );
 }
 
-export default function DatabaseTable({ pageId }: { pageId: string }) {
+export default function DatabaseTable({
+  pageId,
+  properties,
+  rows,
+}: {
+  pageId: string;
+  properties: DbProperty[];
+  rows: DbRow[];
+}) {
   const navigate = useNavigate();
-  const { data, isPending } = useDatabase(pageId);
   const updateProperty = useUpdateProperty(pageId);
   const deleteProperty = useDeleteProperty(pageId);
   const createRow = useCreateRow(pageId);
@@ -108,16 +114,12 @@ export default function DatabaseTable({ pageId }: { pageId: string }) {
   const updateValue = useUpdatePropertyValue(pageId);
   const [menuFor, setMenuFor] = useState<string | null>(null);
 
-  if (isPending || !data) {
-    return <p className="text-sm text-gray-400">불러오는 중...</p>;
-  }
-
   return (
     <div className="mt-4">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            {data.properties.map((prop) => (
+            {properties.map((prop) => (
               <th
                 key={prop.id}
                 className="relative border border-gray-200 p-1 text-left font-medium dark:border-gray-700"
@@ -174,9 +176,9 @@ export default function DatabaseTable({ pageId }: { pageId: string }) {
           </tr>
         </thead>
         <tbody>
-          {data.rows.map((row) => (
+          {rows.map((row) => (
             <tr key={row.pageId}>
-              {data.properties.map((prop) => (
+              {properties.map((prop) => (
                 <td key={prop.id} className="border border-gray-200 p-0 dark:border-gray-700">
                   <PropertyValueCell
                     property={prop}

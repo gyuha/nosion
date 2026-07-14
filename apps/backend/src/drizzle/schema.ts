@@ -133,3 +133,15 @@ export const propertyValue = pgTable(
     primaryKey({ columns: [table.rowPageId, table.propertyId] }),
   ],
 );
+
+// 데이터베이스 페이지의 뷰(테이블/보드/리스트). 필터·정렬·보드 그룹 기준을 config에 저장한다.
+export const dbView = pgTable("db_view", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pageId: uuid("page_id")
+    .notNull()
+    .references(() => page.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type").notNull().$type<"table" | "board" | "list">(),
+  config: jsonb("config").notNull().default({}),
+  position: integer("position").notNull().default(0),
+});

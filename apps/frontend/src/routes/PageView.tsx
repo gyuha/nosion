@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePage, useUpdatePage } from "../api/pages";
 import DocumentEditor from "../components/editor/DocumentEditor";
-import DatabaseTable from "../components/database/DatabaseTable";
+import DatabaseView from "../components/database/DatabaseView";
 import RowPropertiesPanel from "../components/database/RowPropertiesPanel";
 
 export default function PageView() {
@@ -27,8 +27,10 @@ export default function PageView() {
     }
   };
 
+  const isDatabaseNotRow = page.type === "database" && !page.isRow;
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className={`px-4 py-6 ${isDatabaseNotRow ? "" : "mx-auto max-w-3xl"}`}>
       <input
         className="w-full border-none bg-transparent text-3xl font-bold outline-none dark:text-gray-100"
         value={title}
@@ -43,7 +45,7 @@ export default function PageView() {
       {page.type === "document" ? (
         <DocumentEditor pageId={pageId} />
       ) : (
-        <DatabaseTable pageId={pageId} />
+        <DatabaseView pageId={pageId} />
       )}
     </div>
   );

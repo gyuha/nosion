@@ -4,3 +4,4 @@ export const SHARED_PACKAGE_NAME = "@nosion/shared";
 export * from "./pages";
 export * from "./documents";
 export * from "./databases";
+export * from "./views";

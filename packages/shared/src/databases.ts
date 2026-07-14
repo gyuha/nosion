@@ -45,6 +45,7 @@ export interface DbRow {
 export interface DatabaseResponse {
   properties: DbProperty[];
   rows: DbRow[];
+  views: import("./views").DbView[];
 }
 
 export interface UpdatePropertyValueRequest {
