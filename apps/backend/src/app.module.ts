@@ -1,9 +1,16 @@
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { AppController } from "./app.controller";
 import { DrizzleModule } from "./drizzle/drizzle.module";
+import { auth } from "./auth/auth.config";
+import { WorkspaceContextInterceptor } from "./auth/workspace-context.interceptor";
 
 @Module({
-  imports: [DrizzleModule],
+  imports: [DrizzleModule, AuthModule.forRoot({ auth })],
   controllers: [AppController],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: WorkspaceContextInterceptor },
+  ],
 })
 export class AppModule {}

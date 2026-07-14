@@ -1,6 +1,5 @@
 import { Global, Module } from "@nestjs/common";
-import postgres from "postgres";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { db } from "./client";
 
 export const DRIZZLE = Symbol("DRIZZLE_CONNECTION");
 
@@ -9,13 +8,7 @@ export const DRIZZLE = Symbol("DRIZZLE_CONNECTION");
   providers: [
     {
       provide: DRIZZLE,
-      useFactory: () => {
-        const connectionString =
-          process.env.DATABASE_URL ??
-          "postgres://nosion:nosion@localhost:5432/nosion";
-        const client = postgres(connectionString);
-        return drizzle(client);
-      },
+      useValue: db,
     },
   ],
   exports: [DRIZZLE],
