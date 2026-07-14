@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nosion
+      POSTGRES_PASSWORD: nosion
+      POSTGRES_DB: nosion
+    ports:
+      - "5432:5432"
+    volumes:
+      - nosion-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nosion"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nosion-postgres-data:

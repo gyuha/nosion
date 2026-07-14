@@ -1,0 +1,24 @@
+{
+  "name": "nosion",
+  "private": true,
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck",
+    "lint": "pnpm -r --workspace-concurrency=1 run lint",
+    "build": "pnpm -r --workspace-concurrency=1 run build",
+    "dev": "pnpm --parallel --filter backend --filter frontend run dev",
+    "test:e2e:backend": "pnpm --filter backend run test:e2e",
+    "test:e2e": "playwright test",
+    "verify": "pnpm run typecheck && pnpm run lint && pnpm run build && pnpm run test:e2e:backend && pnpm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.6.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@nestjs/core", "esbuild"]
+  }
+}
