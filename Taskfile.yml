@@ -1,0 +1,64 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install dependencies
+    cmds:
+      - pnpm install
+
+  dev:
+    desc: Run backend + frontend dev servers
+    cmds:
+      - pnpm dev
+
+  build:
+    desc: Build all workspaces
+    cmds:
+      - pnpm build
+
+  lint:
+    desc: Lint all workspaces
+    cmds:
+      - pnpm lint
+
+  typecheck:
+    desc: Typecheck all workspaces
+    cmds:
+      - pnpm typecheck
+
+  test:e2e:
+    desc: Run Playwright e2e tests
+    cmds:
+      - pnpm test:e2e
+
+  test:e2e:backend:
+    desc: Run backend e2e tests
+    cmds:
+      - pnpm test:e2e:backend
+
+  verify:
+    desc: Run typecheck, lint, build, and all e2e tests
+    cmds:
+      - pnpm verify
+
+  db:up:
+    desc: Start postgres via docker-compose
+    cmds:
+      - docker compose up -d
+
+  db:down:
+    desc: Stop postgres via docker-compose
+    cmds:
+      - docker compose down
+
+  db:migrate:
+    desc: Run drizzle migrations
+    dir: apps/backend
+    cmds:
+      - pnpm db:migrate
+
+  db:generate:
+    desc: Generate drizzle migrations
+    dir: apps/backend
+    cmds:
+      - pnpm db:generate
